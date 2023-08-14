@@ -3,16 +3,20 @@ from pathlib import Path
 import aiosqlite
 from apscheduler.triggers.cron import CronTrigger
 from twitchio.ext import commands
-from Terrace import DATA_PATH
 import os
 import sqlite3
 
+DATA_PATH = Path('./Terrace/data')
 ORIGINAL_DATA_PATH = DATA_PATH
 DB_PATH = DATA_PATH / "database.sqlite3"
 BUILD_PATH = DB_PATH / "build.sql"
 path = os.path.join(os.getcwd(), "/data/database.sqlite3")
 
-
+TEST_SQL = """
+	INSERT INTO economy
+	(UserName, Credits)
+	VALUES('sockheadrps', 100)
+"""
 class Database:
 	__slots__ = ("bot", "cxn")
 
@@ -58,20 +62,20 @@ class Database:
 			await self.cxn.executescript(script.read())
 
 	async def create_db(self):
-		schema = """
+		schema_econ = """
 		CREATE TABLE IF NOT EXISTS economy (
-  	  	UserID INTERGER PRIMARY KEY,
-    	Credits INTERGER DEFAULT 100,
-   		Lock NUMERIC DEFAULT CURRENT_TIMESTAMP
+		UserName varchar(255) PRIMARY KEY,
+    	Credits INTERGER DEFAULT 100
 		);
 		"""
+		
 		path = os.path.join(os.getcwd(), "/data/database.sqlite3")
 
 		if not os.path.exists(path):
 			Path("./data/database.sqlite3").touch()
 
 			with sqlite3.connect("./data/database.sqlite3") as db:
-				db.execute(schema)
+				db.execute(schema_econ)
 				db.commit()
 
 
