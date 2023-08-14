@@ -4,6 +4,7 @@ from ..bot import Bot
 import websockets
 import json
 
+ws_endpoint = "ws://192.168.1.136:8081/ws/stats"
 
 class WS(commands.Cog):
 
@@ -18,7 +19,7 @@ class WS(commands.Cog):
 			"client-name": "Twitch",
 		}
 		try:
-			async with websockets.connect("ws://192.168.1.136:8081/ws/stats") as websocket:
+			async with websockets.connect(ws_endpoint) as websocket:
 				try:
 					await websocket.send(json.dumps(connect_event))
 					while True:

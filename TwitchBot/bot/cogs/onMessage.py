@@ -152,8 +152,7 @@ class OnMessage(commands.Cog):
         # Can be connection refused error
         except OSError as e:
             for sub_exception in e.args:
-                print(f"Sub-exception: {sub_exception}")
-                raise
+                print('WS connection to OBS/TTS server has been refused')
 
 
 def prepare(bot: Bot):
