@@ -1,0 +1,39 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-repeat: no-repeat;
+  background-size: "100%";
+}
+
+#display,
+#user {
+  margin: auto;
+  font-size: 3rem;
+  background-color: #0004;
+  color: #EEE;
+  padding: 5px;
+
+}
+
+#box {
+  position: absolute;
+  font-family: 'Rowdies', cursive;
+  font-size: 25px;
+  top: 280px;
+  left: 20px;
+  min-width: 150px;
+  justify-content: center;
+  text-align: center;
+  vertical-align: middle;
+  align-content: center;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgb(61, 12, 109);
+  border-radius: 2rem;
+  background-color: rgb(166, 160, 179);
+  color: rgb(7, 38, 65);
+}
