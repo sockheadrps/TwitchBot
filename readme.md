@@ -56,8 +56,27 @@ config.py
 ACCESS_TOKEN = ""
 PREFIX = ""
 INITIAL_CHANNELS = []
+NICK = ""
 
 ```
+
+There is currently a bug in TwitchIO that plays the TTS file at the wrong bitrate. Im working on a PR to fix this, but to patch this to work currently some small changes need to be made to 
+
+(Example using a venv in .venv directory)  
+Open the "__init__.py" file for twitchio/ext/sounds
+```
+.venv/lib/python3.11/site-packages/twitchio/ext/sounds/__init__.py
+```
+
+## Existing code:
+![Alt text](twitchiobroke.png)
+
+## Patched code:
+![Alt text](twitchifixed.png)
+
+
+
+
 
 
 <!-- ROADMAP -->
@@ -87,4 +106,7 @@ Don't forget to give the project a star! Thanks again!
 
 Always bouncing ideas off of, and getting help from:
 * https://github.com/beaux44
+
+
+
 
