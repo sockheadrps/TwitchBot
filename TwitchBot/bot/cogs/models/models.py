@@ -13,6 +13,7 @@ class ConnectTwitch(BaseModel):
 class IsSpeaking(BaseModel):
     event: Literal['IS_SPEAKING']
     user: str
+    character_id: int
 
 class SpeakingComplete(BaseModel):
     event: Literal['SPEAKING_COMPLETE']

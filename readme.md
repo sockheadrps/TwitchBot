@@ -21,7 +21,7 @@ This is definetly still a work in progress, but is useable.
 ![Alt text](dbreadme.png)
 
 ### OBS Browser overlay
-![Alt text](obsreadme.png)
+![Alt text](ttsoverlay.gif)
 
 
 ### Built With
@@ -31,7 +31,6 @@ This is definetly still a work in progress, but is useable.
   * Websockets (client for OBS overlay)
 
 * OBS Overlay
-  * Python (server)
   * Vanilla HTML, CSS, JS
 
 

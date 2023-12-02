@@ -8,6 +8,8 @@ import playsound
 import os
 import time
 import asyncio
+import random
+
 
 
 message_alert_sound_minimum = 20
@@ -132,11 +134,13 @@ class OnMessage(commands.Cog):
                 await websocket.send(json.dumps(connect_event))
                 while True:
                     # if speaking Send speaking event to OBS
+                    # Random char ID until DB is implemented
                     if self.is_speaking:
                         speaking_event = {
                             "event": "IS_SPEAKING",
                             "client": "TWITCHIO_CLIENT",
-                            "user": self.user_speaking
+                            "user": self.user_speaking,
+                            "character_id": random.choice(range(10))
                         }
                         await websocket.send(json.dumps(speaking_event))
 
