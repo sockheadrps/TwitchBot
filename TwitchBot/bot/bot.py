@@ -1,5 +1,5 @@
 from pathlib import Path
-from db import Database
+# from db import Database
 import twitchio
 from twitchio.ext import commands, sounds
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -16,7 +16,7 @@ class Bot(commands.Bot):
         self.modules: list[str] = [p.stem for p in Path("./bot/cogs").glob("*.py")]
         self.scheduler = AsyncIOScheduler()
         self.scheduler.configure(timezone=utc)
-        self.db = Database(self)
+        # self.db = Database(self)
         self.communication = ["test"]
         self.tts = True
         self.interrupt_tts = False
@@ -24,7 +24,6 @@ class Bot(commands.Bot):
         super().__init__(
             prefix=config.PREFIX,
             initial_channels=config.INITIAL_CHANNELS,
-            irc_token=config.IRC_TOKEN,
             nick=config.NICK,
             token=config.ACCESS_TOKEN,
         )
@@ -50,8 +49,8 @@ class Bot(commands.Bot):
             await channel.send(f"{config.NICK} is now online!!")
 
     async def event_ready(self):
-        await self.db.connect()
-        print("Connected to database")
+        # await self.db.connect()
+        # print("Connected to database")
         # test = await self.db.field(
         #     """
         #     SELECT * FROM economy where UserName = ?

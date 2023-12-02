@@ -5,12 +5,14 @@ import websockets
 import json
 
 ws_endpoint = "ws://192.168.1.136:8081/ws/stats"
+run = False
 
 class WS(commands.Cog):
 
 	def __init__(self, bot: Bot):
 		self.bot = bot
-		bot.loop.create_task(self.ws_loop())
+		if run:
+			bot.loop.create_task(self.ws_loop())
 
 	async def ws_loop(self):
 		connect_event = {

@@ -65,13 +65,17 @@ class OnMessage(commands.Cog):
             message_timer_start = time.time()
         else:
             message_timer_start = time.time()
-        if (
-            message.author.name
-            and message.content[0] != "-"
-            and message.content[0] != "!"
-        ):
-            if self.bot.tts:
-                self.message_queue.append((message.author.name, self.cleanse_message(message.content)))
+        try:
+            if (
+                message.author.name
+                and message.content[0] != "-"
+                and message.content[0] != "!"
+            ):
+                if self.bot.tts:
+                    self.message_queue.append((message.author.name, self.cleanse_message(message.content)))
+        # Can error on bot connection....
+        except AttributeError:
+            pass
 
     def tts_speak(self, to_say):
         if tts_bool and int(tts_max_chars) > 0 and not self.is_speaking:
