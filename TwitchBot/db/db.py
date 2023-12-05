@@ -1,16 +1,9 @@
 from pathlib import Path
-
 import aiosqlite
-from apscheduler.triggers.cron import CronTrigger
 from twitchio.ext import commands
-import os
-import sqlite3
+from schemas import schemas
 
-DATA_PATH = Path('./Terrace/data')
-ORIGINAL_DATA_PATH = DATA_PATH
-DB_PATH = DATA_PATH / "database.sqlite3"
-BUILD_PATH = DB_PATH / "build.sql"
-path = os.path.join(os.getcwd(), "/data/database.sqlite3")
+import asyncio
 
 TEST_SQL = """
 	INSERT INTO economy
@@ -18,66 +11,100 @@ TEST_SQL = """
 	VALUES('sockheadrps', 100)
 """
 class Database:
-	__slots__ = ("bot", "cxn")
+	def __init__(self) -> None:
+		self.db_path = Path("data/database.sqlite3")
+		self._create_db()
+		self.conn = None
 
-	def __init__(self, bot: commands.bot) -> None:
-		self.bot = bot
-		bot.scheduler.add_job(self.commit, CronTrigger(second=0))
-
-	async def connect(self) -> None:
-		await self.create_db()
-		self.cxn = await aiosqlite.connect('./data/database.sqlite3')
-		await self.cxn.commit()
-
-	async def commit(self) -> None:
-		await self.cxn.commit()
-
-	async def close(self) -> None:
-		await self.cxn.commit()
-		await self.cxn.close()
-
-	async def field(self, sql, *values):
-		cur = await self.cxn.execute(sql, tuple(values))
-		if (row := await cur.fetchone()) is not None:
-			return row[0]
-
-	async def record(self, sql, *values):
-		cur = await self.cxn.execute(sql, tuple(values))
-		return await cur.fetchall()
-
-	async def column(self, sql, *values):
-		cur = await self.cxn.execute(sql, tuple(values))
-		return [row[0] for row in await cur.fetchall()]
-
-	async def execute(self, sql, *values):
-		cur = await self.cxn.execute(sql, tuple(values))
-		return cur.rowcount
-
-	async def executemany(self, sql, valueset):
-		cur = await self.cxn.executemany(sql, valueset)
-		return cur.rowcount
-
-	async def executescript(self, path):
-		with open(path, "r", encoding="utf-8") as script:
-			await self.cxn.executescript(script.read())
-
-	async def create_db(self):
-		schema_econ = """
-		CREATE TABLE IF NOT EXISTS economy (
-		UserName varchar(255) PRIMARY KEY,
-    	Credits INTERGER DEFAULT 100
-		);
-		"""
+	def _create_db(self):
+		if not self.db_path.exists():
+			self.db_path.parent.mkdir(parents=True, exist_ok=True)
+			self.db_path.touch()
+			print(f"Empty database file '{self.db_path}' created successfully.")
+		else:
+			print(f"Database file '{self.db_path}' already exists.")
+	
+	async def table_exists(self, table_name):
+		if self.conn:
+			query = f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
+			cursor = await self.conn.execute(query, (table_name,))
+			return await cursor.fetchone() is not None
+		else:
+			print("Connection not established.")
+			return False
+	
+	async def create_table(self, schema):
+		if not self.conn:
+			return
+		table_name = schema.get("table_name")
+		if not table_name:
+			return
 		
-		path = os.path.join(os.getcwd(), "/data/database.sqlite3")
+		if not await self.table_exists(table_name):
+			sql = schema.get("sql")
+			try:
+				async with self.conn.execute_script(sql) as cursor:
+					await cursor.fetchall()
+				await self.conn.commit()
+				print(f"Table '{table_name}' created using schema.")
+			except aiosqlite.Error as e:
+				print(f"Error creating table: {e}")
 
-		if not os.path.exists(path):
-			Path("./data/database.sqlite3").touch()
+		else:
+			print(f"Table '{table_name}' already exists.")
 
-			with sqlite3.connect("./data/database.sqlite3") as db:
-				db.execute(schema_econ)
-				db.commit()
+	
+	async def insert_into(self, table_name, values_dict):
+		if self.conn:
+			columns = ', '.join(values_dict.keys())
+			placeholders = ', '.join('?' for _ in values_dict)
+			sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders});"
+			
+			try:
+				await self.conn.execute(sql, list(values_dict.values()))
+				await self.conn.commit()
+				print(f"Inserted values into table '{table_name}'.")
+			except aiosqlite.Error as e:
+				print(f"Error inserting into table: {e}")
+			print(f"Inserted values into table '{table_name}'.")
+		else:
+			print("Connection not established.")
+
+	async def update_table(self, table_name, new_values):
+		if self.conn:
+			set_clause = ', '.join(f"{column} = ?" for column in new_values.keys())
+			values = list(new_values.values())
+
+			sql = f"UPDATE {table_name} SET {set_clause};"
+			
+			try:
+				await self.conn.execute(sql, values)
+				await self.conn.commit()
+				print(f"Updated values in table '{table_name}'.")
+			except aiosqlite.Error as e:
+				print(f"Error updating table: {e}")
+		else:
+			print("Connection not established.")
+
+	async def connect(self):
+		self.conn = await aiosqlite.connect(self.db_path)
+
+	async def close(self):
+		if self.conn:
+			await self.conn.commit()
+			await self.conn.close()
 
 
+async def main():
+	db = Database()
+	await db.connect()  # Ensure the connection is established before creating the table
+	await db.create_table(schemas.schema_econ)
+	await db.insert_into("economy", {"UserName": "sockheadrps", "credits": "100"})
+	await db.update_table("economy", {"UserName": "sockheadrps", "credits": "300"})
+	await db.create_table(schemas.schema_econ)
+	await db.update_table("economy", {"UserName": "sockheadrps", "credits": "3020"})
+	await db.close()  # Close the connection after creating the table
 
+# Run the event loop to execute the asynchronous code
+asyncio.run(main())
 
