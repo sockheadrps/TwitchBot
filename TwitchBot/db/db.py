@@ -1,15 +1,10 @@
 from pathlib import Path
 import aiosqlite
-from twitchio.ext import commands
 from schemas import schemas
+from dataclasses import dataclass, fields
 
 import asyncio
 
-TEST_SQL = """
-	INSERT INTO economy
-	(UserName, Credits)
-	VALUES('sockheadrps', 100)
-"""
 class Database:
 	def __init__(self) -> None:
 		self.db_path = Path("data/database.sqlite3")
@@ -20,91 +15,70 @@ class Database:
 		if not self.db_path.exists():
 			self.db_path.parent.mkdir(parents=True, exist_ok=True)
 			self.db_path.touch()
-			print(f"Empty database file '{self.db_path}' created successfully.")
-		else:
-			print(f"Database file '{self.db_path}' already exists.")
+
 	
-	async def table_exists(self, table_name):
-		if self.conn:
+	async def create_tables(self):
+		async def table_exists(table_name):
 			query = f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
 			cursor = await self.conn.execute(query, (table_name,))
 			return await cursor.fetchone() is not None
-		else:
-			print("Connection not established.")
-			return False
+
+		name = schemas.economy.table_name
+		schema = schemas.economy.sql
+
+		if not await table_exists(name):
+			async with self.conn.executescript(schema) as cursor:
+				await cursor.fetchall()
+			await self.conn.commit()
+
 	
-	async def create_table(self, schema):
-		if not self.conn:
-			return
-		table_name = schema.get("table_name")
-		if not table_name:
-			return
+	async def insert_into(self, table_name, econ_user):
+		field_names = [field for field in econ_user.__annotations__]
+		values = [getattr(econ_user, i) for i in field_names]
+		columns = ', '.join(field_names)
+		placeholders = ', '.join('?' for _ in values)
+		sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders});"
 		
-		if not await self.table_exists(table_name):
-			sql = schema.get("sql")
-			try:
-				async with self.conn.execute_script(sql) as cursor:
-					await cursor.fetchall()
-				await self.conn.commit()
-				print(f"Table '{table_name}' created using schema.")
-			except aiosqlite.Error as e:
-				print(f"Error creating table: {e}")
+		await self.conn.execute(sql, values)
+		await self.conn.commit()
 
-		else:
-			print(f"Table '{table_name}' already exists.")
 
-	
-	async def insert_into(self, table_name, values_dict):
-		if self.conn:
-			columns = ', '.join(values_dict.keys())
-			placeholders = ', '.join('?' for _ in values_dict)
-			sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders});"
-			
-			try:
-				await self.conn.execute(sql, list(values_dict.values()))
-				await self.conn.commit()
-				print(f"Inserted values into table '{table_name}'.")
-			except aiosqlite.Error as e:
-				print(f"Error inserting into table: {e}")
-			print(f"Inserted values into table '{table_name}'.")
-		else:
-			print("Connection not established.")
 
-	async def update_table(self, table_name, new_values):
-		if self.conn:
-			set_clause = ', '.join(f"{column} = ?" for column in new_values.keys())
-			values = list(new_values.values())
+	async def update_table(self, table_name, econ_user):
+		field_names = [field for field in econ_user.__annotations__]
+		values = [getattr(econ_user, i) for i in field_names]
 
-			sql = f"UPDATE {table_name} SET {set_clause};"
-			
-			try:
-				await self.conn.execute(sql, values)
-				await self.conn.commit()
-				print(f"Updated values in table '{table_name}'.")
-			except aiosqlite.Error as e:
-				print(f"Error updating table: {e}")
-		else:
-			print("Connection not established.")
+		set_clause = ', '.join(f"{column} = ?" for column in field_names)
+		sql = f"UPDATE {table_name} SET {set_clause};"
+		
+		await self.conn.execute(sql, values)
+		await self.conn.commit()
+
 
 	async def connect(self):
 		self.conn = await aiosqlite.connect(self.db_path)
+		await self.create_tables()
+
 
 	async def close(self):
-		if self.conn:
-			await self.conn.commit()
-			await self.conn.close()
+		await self.conn.close()
+
+	@staticmethod
+	def economy_user(username, credits):
+
+		@dataclass
+		class Econ_user:
+			username: str
+			points: int
+		return Econ_user(username, credits)
 
 
 async def main():
 	db = Database()
-	await db.connect()  # Ensure the connection is established before creating the table
-	await db.create_table(schemas.schema_econ)
-	await db.insert_into("economy", {"UserName": "sockheadrps", "credits": "100"})
-	await db.update_table("economy", {"UserName": "sockheadrps", "credits": "300"})
-	await db.create_table(schemas.schema_econ)
-	await db.update_table("economy", {"UserName": "sockheadrps", "credits": "3020"})
-	await db.close()  # Close the connection after creating the table
+	await db.connect()
+	await db.insert_into("economy", db.economy_user("sockheadrps", 100))
+	await db.update_table("economy", db.economy_user("sockheadrps", 5000))
+	await db.close()  
 
-# Run the event loop to execute the asynchronous code
 asyncio.run(main())
 

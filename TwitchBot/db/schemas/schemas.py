@@ -1,9 +1,10 @@
-schema_econ = {
-    "table_name": "economy",
-    "sql": """
-			CREATE TABLE IF NOT EXISTS economy (
-			UserName varchar(255) PRIMARY KEY,
-			Credits INTEGER DEFAULT 100
-		);
-		"""
-}
+from collections import namedtuple
+
+Economy = namedtuple("Economy", "table_name sql") 
+economy = Economy("economy",
+                        """
+						CREATE TABLE IF NOT EXISTS economy (
+						UserName varchar(255) PRIMARY KEY,
+						Points INTEGER DEFAULT 100
+						);
+						""")
