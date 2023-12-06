@@ -1,7 +1,8 @@
 from pathlib import Path
 import aiosqlite
 from schemas import schemas
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
+from typing import Optional
 
 import asyncio
 
@@ -23,34 +24,40 @@ class Database:
 			cursor = await self.conn.execute(query, (table_name,))
 			return await cursor.fetchone() is not None
 
-		name = schemas.economy.table_name
-		schema = schemas.economy.sql
-
-		if not await table_exists(name):
-			async with self.conn.executescript(schema) as cursor:
+		if not await table_exists(schemas.user.table_name):
+			async with self.conn.executescript(schemas.user.sql) as cursor:
 				await cursor.fetchall()
 			await self.conn.commit()
 
 	
-	async def insert_into(self, table_name, econ_user):
-		field_names = [field for field in econ_user.__annotations__]
-		values = [getattr(econ_user, i) for i in field_names]
-		columns = ', '.join(field_names)
-		placeholders = ', '.join('?' for _ in values)
-		sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders});"
+	async def insert_into(self, table_name, user):
+		field_names = [field for field in user.__annotations__]
+		values = [getattr(user, i) for i in field_names if getattr(user, i) is not None]
+		print(values)
+		non_none_columns = [
+			(field, value) for field, value in zip(field_names, values) if value is not None
+			]
+		columns, filtered_values = zip(*non_none_columns)
+		columns_str = ', '.join(columns)
+		placeholders = ', '.join('?' for _ in filtered_values)
+		sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders});"
 		
 		await self.conn.execute(sql, values)
 		await self.conn.commit()
 
 
-	async def update_table(self, table_name, econ_user):
-		field_names = [field for field in econ_user.__annotations__]
-		values = [getattr(econ_user, i) for i in field_names]
+	async def update_table(self, table_name, user):
+		field_names = [field for field in user.__annotations__]
+		values = [getattr(user, i) for i in field_names]
 
-		set_clause = ', '.join(f"{column} = ?" for column in field_names)
+		# Filter out None values and their corresponding columns
+		non_none_columns_with_values = [(field, value) for field, value in zip(field_names, values) if value is not None]
+
+		columns, filtered_values = zip(*non_none_columns_with_values)
+		set_clause = ', '.join(f"{column} = ?" for column in columns)
 		sql = f"UPDATE {table_name} SET {set_clause};"
-		
-		await self.conn.execute(sql, values)
+
+		await self.conn.execute(sql, filtered_values)
 		await self.conn.commit()
 
 
@@ -63,20 +70,21 @@ class Database:
 		await self.conn.close()
 
 	@staticmethod
-	def economy_user(username, credits):
+	def user(username, credits=None, points=None):
 
 		@dataclass
-		class Econ_user:
+		class User:
 			username: str
-			points: int
-		return Econ_user(username, credits)
+			credits: Optional[int] 
+			points: Optional[int] 
+		return User(username, credits, points)
 
 
 async def main():
 	db = Database()
 	await db.connect()
-	await db.insert_into("economy", db.economy_user("sockheadrps", 100))
-	await db.update_table("economy", db.economy_user("sockheadrps", 5000))
+	await db.insert_into("users", db.user("sockheadrps"))
+	await db.update_table("users", db.user(username="sockheadrps", credits=5000))
 	await db.close()  
 
 asyncio.run(main())
