@@ -43,7 +43,6 @@ class Database:
 		await self.conn.commit()
 
 
-
 	async def update_table(self, table_name, econ_user):
 		field_names = [field for field in econ_user.__annotations__]
 		values = [getattr(econ_user, i) for i in field_names]
