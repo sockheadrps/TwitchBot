@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Literal, Union, Annotated
+from typing import Literal, Union, Annotated
 
 
 class ConnectOBS(BaseModel):
@@ -13,7 +13,7 @@ class ConnectTwitch(BaseModel):
 class IsSpeaking(BaseModel):
     event: Literal['IS_SPEAKING']
     user: str
-    character_id: int
+    level: int
 
 class SpeakingComplete(BaseModel):
     event: Literal['SPEAKING_COMPLETE']

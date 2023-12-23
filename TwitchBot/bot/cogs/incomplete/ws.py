@@ -1,5 +1,5 @@
 from twitchio.ext import commands
-from ..bot import Bot
+from ...bot import Bot
 
 import websockets
 import json

@@ -8,7 +8,8 @@ import playsound
 import os
 import time
 import asyncio
-import random
+from aiodesa import Db
+
 
 
 
@@ -75,6 +76,7 @@ class OnMessage(commands.Cog):
             ):
                 if self.bot.tts:
                     self.message_queue.append((message.author.name, self.cleanse_message(message.content)))
+
         # Can error on bot connection....
         except AttributeError:
             pass
@@ -136,12 +138,25 @@ class OnMessage(commands.Cog):
                     # if speaking Send speaking event to OBS
                     # Random char ID until DB is implemented
                     if self.is_speaking:
-                        speaking_event = {
-                            "event": "IS_SPEAKING",
-                            "client": "TWITCHIO_CLIENT",
-                            "user": self.user_speaking,
-                            "character_id": random.choice(range(10))
-                        }
+                        async with Db("database.sqlite3") as db:
+                            # Create table from UserEcon class
+                            await db.read_table_schemas(self.bot.UserEcon)
+                            find = db.find(self.bot.UserEcon)
+                            author = await find(self.user_speaking)
+                            if author == None:
+                                speaking_event = {
+                                    "event": "IS_SPEAKING",
+                                    "client": "TWITCHIO_CLIENT",
+                                    "user": self.user_speaking,
+                                    "level": 0
+                                    }
+                            else:
+                                speaking_event = {
+                                    "event": "IS_SPEAKING",
+                                    "client": "TWITCHIO_CLIENT",
+                                    "user": self.user_speaking,
+                                    "level": author.level
+                                }
                         await websocket.send(json.dumps(speaking_event))
 
                         # yeild while speaking

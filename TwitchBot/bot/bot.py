@@ -1,25 +1,30 @@
 from pathlib import Path
-# from db import Database
 import twitchio
-from twitchio.ext import commands, sounds
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from pytz import utc
-
+from twitchio.ext import commands
 from bot import config
-
-# from ..Terrace.db import Database
-import websockets
+from dataclasses import dataclass
+from aiodesa.utils.table import ForeignKey, UniqueKey, PrimaryKey, set_key
 
 
 class Bot(commands.Bot):
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         self.modules: list[str] = [p.stem for p in Path("./bot/cogs").glob("*.py")]
-        self.scheduler = AsyncIOScheduler()
-        self.scheduler.configure(timezone=utc)
-        # self.db = Database(self)
+        self.db = None
         self.communication = ["test"]
         self.tts = True
         self.interrupt_tts = False
+        self.channel = None
+
+        @dataclass
+        @set_key(PrimaryKey("username"))
+        class UserEcon:
+            username: str
+            credits: int | None = None
+            points: int | None = None
+            level: int = 0
+            table_name: str = "user_economy"
+        self.UserEcon = UserEcon
+
 
         super().__init__(
             prefix=config.PREFIX,
@@ -28,43 +33,29 @@ class Bot(commands.Bot):
             token=config.ACCESS_TOKEN,
         )
 
-    def setup(self) -> None:
-        print("Running setup....")
-        print(self.modules)
-        
+    def setup_cogs(self) -> None:
         p = Path("./bot/cogs")
-        print(p.is_dir)
-
         for cog in self.modules:
             print(cog)
             self.load_module(f"bot.cogs.{cog}")
 
     def run(self) -> None:
-        self.setup()
+        self.setup_cogs()
         print("Running bot...")
         super().run()
 
     async def event_join(self, channel: twitchio.Channel, user: twitchio.User) -> None:
         if user.name == config.NICK:
             await channel.send(f"{config.NICK} is now online!!")
+            self.channel = channel
 
     async def event_ready(self):
-        # await self.db.connect()
-        # print("Connected to database")
-        # test = await self.db.field(
-        #     """
-        #     SELECT * FROM economy where UserName = ?
-        #     """
-        #     , 'sockheadrps')
-        # print(f"test {test}")
-        self.scheduler.start()
-        print(f"Scheduler started ({len(self.scheduler.get_jobs()):,} job(s))")
         print(f"Logged in as | {self.nick}")
         print(f"User id is | {self.user_id}")
 
     async def event_message(self, message: twitchio.Message) -> None:
         print(message.content)
-        if not message.author or message.author.name == config.NICK:
-            return
+        # if not message.author or message.author.name == config.NICK:
+        #     return
         await self.handle_commands(message)
     

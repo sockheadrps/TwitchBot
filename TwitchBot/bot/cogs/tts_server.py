@@ -1,8 +1,6 @@
 from twitchio.ext import commands
 from ..bot import Bot
-
 import json
-
 from websockets.server import serve
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 from bot.cogs.models.models import Model, IsSpeaking, SpeakingComplete, ConnectTwitch, ConnectOBS

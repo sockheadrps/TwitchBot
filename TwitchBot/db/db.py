@@ -1,10 +1,10 @@
 from pathlib import Path
 import aiosqlite
-from schemas import schemas
+from db.schemas import schemas
 from dataclasses import dataclass
 from typing import Optional
-
 import asyncio
+
 
 class Database:
 	def __init__(self) -> None:
@@ -31,6 +31,7 @@ class Database:
 
 	
 	async def insert_into(self, table_name, user):
+		print('insert')
 		field_names = [field for field in user.__annotations__]
 		values = [getattr(user, i) for i in field_names if getattr(user, i) is not None]
 		print(values)
@@ -60,6 +61,16 @@ class Database:
 		await self.conn.execute(sql, filtered_values)
 		await self.conn.commit()
 
+		@staticmethod
+		def user(username, credits=None, points=None):
+
+			@dataclass
+			class User:
+				username: str
+				credits: Optional[int] 
+				points: Optional[int] 
+			return User(username, credits, points)
+
 
 	async def connect(self):
 		self.conn = await aiosqlite.connect(self.db_path)
@@ -69,23 +80,12 @@ class Database:
 	async def close(self):
 		await self.conn.close()
 
-	@staticmethod
-	def user(username, credits=None, points=None):
+	
+	async def __aenter__(self):
+		await self.connect()
+		return self
 
-		@dataclass
-		class User:
-			username: str
-			credits: Optional[int] 
-			points: Optional[int] 
-		return User(username, credits, points)
+	async def __aexit__(self, exc_type, exc_value, traceback):
+		await self.close()
 
-
-async def main():
-	db = Database()
-	await db.connect()
-	await db.insert_into("users", db.user("sockheadrps"))
-	await db.update_table("users", db.user(username="sockheadrps", credits=5000))
-	await db.close()  
-
-asyncio.run(main())
-
+	
