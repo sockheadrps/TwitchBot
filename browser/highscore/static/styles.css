@@ -1,0 +1,58 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 1); /* 100% opaque black background */
+    font-family: 'Roboto', sans-serif;
+    color: #ffffff;
+  }
+  
+  .overlay-container {
+    width: 350px;
+    background-color: rgba(255, 255, 255, 0.3); /* 30% opaque white container */
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: opacity 1s ease-in-out; /* Transition for fade in and fade out */
+    opacity: 0;
+  }
+  
+  .overlay-container.visible {
+    display: block; /* Show when visible class is added */
+    opacity: 1; /* Fully visible */
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.2rem;
+    color: #ffffff; /* White text color for better readability */
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  
+  th {
+    background-color: #4CAF50; /* Dark green background */
+    color: white;
+    font-weight: 700;
+  }
+  
+  td {
+    background-color: rgba(0, 0, 0, 0.6); /* Slightly opaque black rows */
+    font-weight: 400;
+    color: white; /* White text color for better readability */
+  }
+  

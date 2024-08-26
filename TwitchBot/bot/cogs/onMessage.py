@@ -58,6 +58,8 @@ class OnMessage(commands.Cog):
         asyncio.get_event_loop().create_task(self.tts_task())
         asyncio.get_event_loop().create_task(self.obs_tts_loop())
 
+    
+     
     @commands.Cog.event()
     async def event_message(self, message):
         global message_alert_sound_minimum, message_timer_start

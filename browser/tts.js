@@ -119,7 +119,7 @@ function connectWS(url, maxRetries, retryInterval) {
   }
   createWebSocket()
 }
-const url = "ws://0.0.0.0:8181/";
+const url = "ws://localhost:8181/";
 const maxRetries = 30;
 const retryInterval = 5000
 connectWS(url, maxRetries, retryInterval)
